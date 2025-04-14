@@ -8,30 +8,28 @@ int main() {
     string text;
 
     cout << "Введите текст: ";
-    getline(cin, text); // Считываем весь текст
+    getline(cin, text); 
 
     string result; // Строка для хранения результата
-    bool lastWasSpace = false; // Флаг для отслеживания пробелов
+    bool lastWasSpace = false; //  для отслеживания пробелов
 
-    for (char ch : text) { // Проходим по каждому символу в исходном тексте
+    for (char ch : text) { 
         if (ch == '#') {
             continue; // Пропускаем символы '#'
         }
         if (ch == '.') {
             if (lastWasSpace) {
-                // Если последний символ был пробелом, не добавляем его
                 result.pop_back(); // Убираем последний пробел из результата
             }
             result += ch; // Добавляем точку
             lastWasSpace = false; // Сбрасываем флаг
         }
         else {
-            result += ch; // Добавляем текущий символ в результат
+            result += ch; 
             lastWasSpace = (ch == ' '); // Устанавливаем флаг, если текущий символ пробел
         }
     }
 
-    // Выводим результат
     cout << "Измененный текст: " << result << endl;
 
     return 0;
