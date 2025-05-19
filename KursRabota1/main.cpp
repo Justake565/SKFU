@@ -3,6 +3,7 @@
 using namespace std;
 int main() {
     setlocale(LC_ALL, "Russian");
+    system("chcp 1251");
     ApartmentExchange exchange; //создает объект exchange класса ApartmentExchange, который управ. заявками
     exchange.loadFromFile("requests.txt"); // Загружаем заявки из файла
 
@@ -69,3 +70,5 @@ int main() {
 
     return 0;
 }
+
+
