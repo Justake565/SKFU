@@ -1,103 +1,170 @@
 #include "ApartmentExchange.h"
-void ApartmentExchange::addRequest(const ExchangeRequest& request) { //Добавляет новую заявку в список requests.
-    requests.push_back(request);
+
+// Добавляет новую заявку в список заявок
+void ApartmentExchange::addRequest(const ExchangeRequest& request) {
+    requests.push_back(request);  
 }
 
-void ApartmentExchange::findMatch(const ExchangeRequest& request) { //Этот метод ищет совпадения для переданной заявки.
+// Ищет совпадение для указанной заявки среди существующих
+bool ApartmentExchange::findMatch(const ExchangeRequest& request) {
     auto it = requests.begin();
     while (it != requests.end()) {
-        if (it->desired.rooms == request.offered.rooms &&
-            it->desired.floor == request.offered.floor &&
-            abs(it->desired.area - request.offered.area) <= 0.1 * it->desired.area) {
+        // Проверяем условия совпадения:
+        // 1. Количество комнат в желаемой квартире одного пользователя должно совпадать
+        //    с количеством комнат в предлагаемой квартире другого
+        // 2. Этажи должны совпадать
+        // 3. Разница в площади не должна превышать 10%
+        if (it->getDesired().getRooms() == request.getOffered().getRooms() &&
+            it->getDesired().getFloor() == request.getOffered().getFloor() &&
+            abs(it->getDesired().getArea() - request.getOffered().getArea()) <= 0.1 * it->getDesired().getArea()) {
 
-            cout << "Найдено совпадение:\n";
-            cout << "Искомая квартира: " << it->desired.rooms << " комнат, "
-                << it->desired.area << " кв.м, Этаж: " << it->desired.floor
-                << ", Район: " << it->desired.district << "\n";
-            cout << "Имеющаяся квартира: " << it->offered.rooms << " комнат, "
-                << it->offered.area << " кв.м, Этаж: " << it->offered.floor
-                << ", Район: " << it->offered.district << "\n";
-            it = requests.erase(it); // Удаляем найденную заявку
-            return;
+     
+            cout << "\n=== Найдено совпадение ===\n";
+            cout << "Искомая квартира: " << it->getDesired().getRooms() << " комн., "
+                << it->getDesired().getArea() << " кв.м, " << it->getDesired().getFloor()
+                << " этаж, район: " << it->getDesired().getDistrict() << "\n";
+            cout << "Имеющаяся квартира: " << it->getOffered().getRooms() << " комн., "
+                << it->getOffered().getArea() << " кв.м, " << it->getOffered().getFloor()
+                << " этаж, район: " << it->getOffered().getDistrict() << "\n";
+
+            // Спрашиваем пользователя, хочет ли он удалить найденную заявку
+            cout << "\nУдалить найденную заявку из картотеки? (y/n): ";
+            char choice;
+            cin >> choice;
+
+            if (choice == 'y' || choice == 'Y') {
+                it = requests.erase(it);  // Удаляем заявку из списка
+                cout << "Заявка успешно удалена из картотеки.\n";
+                return true;  // Возвращаем true, так как совпадение найдено и обработано
+            }
+            return false;  // Совпадение найдено, но не обработано (не удалено)
         }
         else {
-            ++it;
+            ++it;  // Переходим к следующей заявке
         }
     }
-    addRequest(request); // Если совпадений нет, добавляем заявку в список
+    // Если совпадений не найдено, добавляем новую заявку в список
+    cout << "Совпадений не найдено. Заявка добавлена в картотеку.\n";
+    addRequest(request);
+    return false;  // Совпадений не найдено
 }
 
-void ApartmentExchange::displayRequests() const { //Этот метод отображает все заявки в списке. 
-    if (requests.empty()) {
-        cout << "Картотека пуста.\n";
-        return;
-    }
+// Удаляет указанную заявку из списка
+bool ApartmentExchange::removeRequest(const ExchangeRequest& request) {
+    auto it = requests.begin();
+    while (it != requests.end()) {
+        // Ищем заявку, полностью совпадающую по всем параметрам
+        if (it->getDesired().getRooms() == request.getDesired().getRooms() &&
+            it->getDesired().getFloor() == request.getDesired().getFloor() &&
+            it->getDesired().getDistrict() == request.getDesired().getDistrict() &&
+            it->getOffered().getRooms() == request.getOffered().getRooms() &&
+            it->getOffered().getFloor() == request.getOffered().getFloor() &&
+            it->getOffered().getDistrict() == request.getOffered().getDistrict()) {
 
-    for (const auto& req : requests) {
-        cout << "Искомая квартира: " << req.desired.rooms << " комнат, "
-            << req.desired.area << " кв.м, Этаж: " << req.desired.floor
-            << ", Район: " << req.desired.district << "\n";
-        cout << "Имеющаяся квартира: " << req.offered.rooms << " комнат, "
-            << req.offered.area << " кв.м, Этаж: " << req.offered.floor
-            << ", Район: " << req.offered.district << "\n";
+            it = requests.erase(it);  // Удаляем найденную заявку
+            return true;  
+        }
+        else {
+            ++it;  
+        }
     }
+    return false;  // Заявка не найдена
 }
 
-void ApartmentExchange::saveToFile(const string& filename) const { //Сохраняет все заявки в указанный файл.
-    ofstream file(filename);
+// Сохраняет все заявки в указанный файл
+void ApartmentExchange::saveToFile(const string& filename) const {
+    ofstream file(filename);  // Открываем файл для записи
     if (file.is_open()) {
         for (const auto& req : requests) {
-            file << req.desired.rooms << ","
-                << req.desired.area << ","
-                << req.desired.floor << ","
-                << req.desired.district << "\n"
-                << req.offered.rooms << ","
-                << req.offered.area << ","
-                << req.offered.floor << ","
-                << req.offered.district << "\n";
+            // Записываем данные о желаемой квартире
+            file << req.getDesired().getRooms() << ","
+                << req.getDesired().getArea() << ","
+                << req.getDesired().getFloor() << ","
+                << req.getDesired().getDistrict() << "\n"
+                // Записываем данные о предлагаемой квартире
+                << req.getOffered().getRooms() << ","
+                << req.getOffered().getArea() << ","
+                << req.getOffered().getFloor() << ","
+                << req.getOffered().getDistrict() << "\n";
         }
-        file.close();
+        file.close();  // Закрываем файл
+        cout << "Данные успешно сохранены в файл " << filename << endl;
     }
     else {
         cerr << "Не удалось открыть файл для записи.\n";
     }
 }
 
-void ApartmentExchange::loadFromFile(const string& filename) { //Загружает заявки из указанного файла.
-    ifstream file(filename);
+// Загружает заявки из указанного файла
+void ApartmentExchange::loadFromFile(const string& filename) {
+    currentFilename = filename;  // Сохраняем имя файла
+    ifstream file(filename);     // Открываем файл для чтения
+    requests.clear();            // Очищаем текущий список заявок
+
     if (file.is_open()) {
-        while (!file.eof()) {
+        while (!file.eof()) {  // Читаем до конца файла
             int rooms, floor;
             double area;
             string district;
 
-            if (file >> rooms) {
-                file.ignore(); // Игнорируем запятую
-                file >> area;
-                file.ignore();
-                file >> floor;
-                file.ignore();
-                getline(file, district);
+            if (file >> rooms) {  // Если успешно прочитали количество комнат
+                file.ignore();     // Пропускаем запятую
+                file >> area;     // Читаем площадь
+                file.ignore();    
+                file >> floor;     // Читаем этаж
+                file.ignore();    
+                getline(file, district);  // Читаем район
 
-                Apartment desired(rooms, area, floor, district);
+                // Создаем объект желаемой квартиры
+                Apartment desired;
+                desired.setRooms(rooms);
+                desired.setArea(area);
+                desired.setFloor(floor);
+                desired.setDistrict(district);
 
+                // Аналогично читаем данные о предлагаемой квартире
                 file >> rooms;
-                file.ignore(); // Игнорируем запятую
+                file.ignore();
                 file >> area;
                 file.ignore();
                 file >> floor;
                 file.ignore();
                 getline(file, district);
 
-                Apartment offered(rooms, area, floor, district);
+                // Создаем объект предлагаемой квартиры
+                Apartment offered;
+                offered.setRooms(rooms);
+                offered.setArea(area);
+                offered.setFloor(floor);
+                offered.setDistrict(district);
 
+                // Создаем заявку и добавляем в список
                 ExchangeRequest request(desired, offered);
                 addRequest(request);
             }
         }
-        file.close();
+        file.close();  // Закрываем файл
     }
     else {
-        cerr << "Не удалось открыть файл для чтения.\n";
+        cerr << "Не удалось открыть файл для чтения. Будет создан новый файл при сохранении.\n";
     }
 }
+
+// Выводит все заявки на экран
+void ApartmentExchange::displayRequests() const {
+    if (requests.empty()) {  // Если список пуст
+        cout << "Картотека пуста.\n";
+        return;
+    }
+
+    // Проходим по всем заявкам и выводим их данные
+    for (const auto& req : requests) {
+        cout << "Искомая квартира: " << req.getDesired().getRooms() << " комн., "
+            << req.getDesired().getArea() << " кв.м, " << req.getDesired().getFloor()
+            << " этаж, район: " << req.getDesired().getDistrict() << "\n";
+        cout << "Имеющаяся квартира: " << req.getOffered().getRooms() << " комн., "
+            << req.getOffered().getArea() << " кв.м, " << req.getOffered().getFloor()
+            << " этаж, район: " << req.getOffered().getDistrict() << "\n";
+    }
+}
+
